@@ -128,7 +128,9 @@ try {
         
         <div class="search-container">
             <input type="text" id="searchInput" placeholder="Search students by name, grade, or status..." onkeyup="searchTable()">
+            <span id="resultCount" style="margin-left: 10px; font-weight: bold;"></span>
         </div>
+
         
         <table id="studentTable">
             <thead>
@@ -179,7 +181,7 @@ try {
                             if ($countFail >= 2 || $countDrp >= 4) {
                                 $remarks = "OUTRIGHT DISQUALIFICATION";
                             } elseif (
-                                ($average !== null && $average > 2.75) ||
+                                // ($average !== null && $average > 2.75) ||
                                 $countFail == 1 ||
                                 $countIncDrp >= 3
                             ) {
@@ -204,6 +206,13 @@ try {
                                     data-student-name="<?= htmlspecialchars(strtoupper($student['name'])) ?>"
                                 >
                                     View Grades
+                                </button>
+                                <button 
+                                    class="btn btn-primary btn-sm export-grades-btn" 
+                                    data-student-id="<?= htmlspecialchars($student['id']) ?>" 
+                                    data-student-name="<?= htmlspecialchars(strtoupper($student['name'])) ?>"
+                                >
+                                    Print Evaluated Grades
                                 </button>
                             </td>
                         </tr>
@@ -239,12 +248,15 @@ try {
 
         <script>
             function searchTable() {
+                // document.getElementById("resultCount").textContent = filter ? `Showing ${count} result(s)` : "";
                 let input = document.getElementById("searchInput");
                 let filter = input.value.toUpperCase();
                 let table = document.getElementById("studentTable");
                 let tr = table.getElementsByTagName("tr");
 
-                for (let i = 1; i < tr.length; i++) {
+                let count = 0;
+
+                for (let i = 1; i < tr.length; i++) { // skip the header row
                     let found = false;
                     let td = tr[i].getElementsByTagName("td");
                     
@@ -258,8 +270,16 @@ try {
                         }
                     }
                     
-                    tr[i].style.display = found ? "" : "none";
+                    if (found) {
+                        tr[i].style.display = "";
+                        count++;
+                    } else {
+                        tr[i].style.display = "none";
+                    }
                 }
+
+                // Update result count
+                document.getElementById("resultCount").textContent = `Showing ${count} result(s)`;
             }
             document.addEventListener('DOMContentLoaded', function() {
                 // When "View Grades" button is clicked
@@ -288,6 +308,15 @@ try {
                         // Show the modal (assuming Bootstrap 5+)
                         const modal = new bootstrap.Modal(document.getElementById('gradesModal'));
                         modal.show();
+                    });
+                });
+                document.querySelectorAll('.export-grades-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const studentId = this.getAttribute('data-student-id');
+
+                        // Open PDF in a new tab/window
+                        const url = `export_grades.php?student_id=${encodeURIComponent(studentId)}`;
+                        window.open(url, '_blank'); // Open in a new tab
                     });
                 });
             });
