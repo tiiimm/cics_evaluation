@@ -82,7 +82,8 @@ function initializeDatabase($conn) {
             student_id INT NOT NULL,
             section_id INT NOT NULL,
             grade VARCHAR(10) NOT NULL,
-            subject VARCHAR(10) NOT NULL,
+            professor VARCHAR(50) NOT NULL,
+            subject VARCHAR(50) NOT NULL,
             remarks TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE

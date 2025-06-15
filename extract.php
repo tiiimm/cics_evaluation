@@ -92,6 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $conn->beginTransaction();
                 $insertedCount = 0;
                 
+                // Get all existing students once at the beginning
+                $existingStmt = $conn->query("SELECT id, name FROM students");
+                $allExistingStudents = $existingStmt->fetchAll(PDO::FETCH_ASSOC);
+                
                 foreach ($studentData as $sectionIndex => $sectionGroup) {
                     if (!isset($sectionsData[$sectionIndex])) {
                         continue;
@@ -106,12 +110,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             continue;
                         }
 
-                        $existingStmt = $conn->query("SELECT id, name FROM students");
-                        $existingStudents = $existingStmt->fetchAll(PDO::FETCH_ASSOC);
-
-                        $matched = false;
+                        // Name matching logic
                         $nametosave = $student['name'];
-                        foreach ($existingStudents as $existing) {
+                        $studentId = null;
+                        
+                        foreach ($allExistingStudents as $existing) {
                             $nametosave1array = explode(" ", $student['name']);
                             $nametocheck1array = explode(" ", $existing['name']);
 
@@ -127,24 +130,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                             $average = $length > 0 ? $total / $length : 0;
 
-                            if ($average >= 90) { // Adjust threshold as needed
+                            if ($average >= 90) {
                                 $studentId = (int)$existing['id'];
-                                $matched = true;
                                 $nametosave = $existing['name'];
                                 break;
                             }
                         }
                         
-                        $stmt = $conn->prepare("
-                            INSERT INTO students (name) 
-                            VALUES (?) 
-                            ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)
-                        ");
-                        $stmt->execute([trim($nametosave)]);
-                        $studentId = (int)$conn->lastInsertId();
-
-                        if ($studentId <= 0) {
-                            continue;
+                        // If no match found, check for exact match before inserting
+                        if ($studentId === null) {
+                            $checkStmt = $conn->prepare("SELECT id FROM students WHERE name = ?");
+                            $checkStmt->execute([trim($nametosave)]);
+                            $existingStudent = $checkStmt->fetch(PDO::FETCH_ASSOC);
+                            
+                            if ($existingStudent) {
+                                $studentId = (int)$existingStudent['id'];
+                            } else {
+                                // Insert new student
+                                $insertStmt = $conn->prepare("INSERT INTO students (name) VALUES (?)");
+                                $insertStmt->execute([trim($nametosave)]);
+                                $studentId = (int)$conn->lastInsertId();
+                                
+                                if ($studentId <= 0) {
+                                    continue;
+                                }
+                                // Add to our local cache of students
+                                $allExistingStudents[] = ['id' => $studentId, 'name' => $nametosave];
+                            }
                         }
                         
                         // Validate grade
@@ -153,8 +165,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Insert grade with section and subject
                         $gradeStmt = $conn->prepare("
                             INSERT INTO student_grades 
-                            (student_id, section_id, subject, grade, remarks) 
-                            VALUES (?, ?, ?, ?, ?)
+                            (student_id, section_id, subject, grade, professor, remarks) 
+                            VALUES (?, ?, ?, ?, ?, ?)
                             ON DUPLICATE KEY UPDATE
                             grade = VALUES(grade), remarks = VALUES(remarks)
                         ");
@@ -163,6 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $sectionId,
                             $subject,
                             $grade,
+                            "Ms. Lozada",
                             !empty($student['remarks']) ? sanitize($student['remarks']) : null
                         ]);
                         

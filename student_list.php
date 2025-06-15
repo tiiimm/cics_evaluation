@@ -138,6 +138,7 @@ try {
                     <th>#</th>
                     <th>Student Name</th>
                     <th>Remarks</th> <!-- New column -->
+                    <th>Reason</th> <!-- New column -->
                     <th></th>
                 </tr>
             </thead>
@@ -158,61 +159,79 @@ try {
                             $countFail = 0;
                             $countInc = 0;
                             $countDrp = 0;
+                            $unsatisfactoryMajor = 0;
                             $numericGradeSum = 0;
                             $countNumeric = 0;
 
                             foreach ($grades as $g) {
                                 $grade = strtoupper(trim($g['grade']));
+                                $subject = strtoupper(trim($g['subject']));
                                 if (is_numeric($grade)) {
                                     $numericGradeSum += floatval($grade);
                                     $countNumeric++;
-                                    if (floatval($grade) == 5.0) $countFail++;
+                                    if (floatval($grade) == 5.0) {
+                                        $countFail++;
+
+                                        if ($subject == 'ITCC 103' || $subject == 'ITCC 104' || $subject == 'ITPC 101') $unsatisfactoryMajor++;
+                                    }
                                 } elseif (str_contains($grade, 'INC')) {
                                     $countInc++;
                                 } elseif (str_contains($grade, 'DRP')) {
                                     $countDrp++;
+                                    if ($subject == 'ITCC 103' || $subject == 'ITCC 104' || $subject == 'ITPC 101') $unsatisfactoryMajor++;
                                 }
                             }
 
                             $average = $countNumeric > 0 ? ($numericGradeSum * 3) / ($countNumeric * 3) : null;
                             $remarks = "GOOD STANDING";
+                            $reason = "";
                             $countIncDrp = $countInc + $countDrp;
 
-                            if ($countFail >= 2 || $countDrp >= 4) {
+                            if ($unsatisfactoryMajor >= 2 || $countDrp >= 4) {
+                            // if ($countFail >= 2 || $countDrp >= 4) {
                                 $remarks = "OUTRIGHT DISQUALIFICATION";
-                            } elseif (
+                                if ($countFail >= 2) $reason = $reason."RETENTION POLICY 4A. 2 or more failing major grades<br>";
+                                else if ($unsatisfactoryMajor >= 2) $reason = $reason."2 or more drp/fail major grades<br>";
+                                if ($countDrp >= 4) $reason = $reason."RETENTION POLICY 4B. 4 DRP<br>";
+                            }
+                            elseif (
                                 // ($average !== null && $average > 2.75) ||
                                 $countFail == 1 ||
                                 $countIncDrp >= 3
                             ) {
                                 $remarks = "PROBATION";
+                                if ($average !== null && $average > 2.75 && $countNumeric>=7) $reason = $reason."RETENTION POLICY 2A. AVERAGE BELOW 2.75<br>";
+                                if ($countFail == 1) $reason = $reason."RETENTION POLICY 2B. With a 5.0 in any subject<br>";
+                                if ($countIncDrp >= 3) $reason = $reason."RETENTION POLICY 2C. Total of 3 INC and/or DRP<br>";
                             }
 
                             $remarksColor = match($remarks) {
                                 "GOOD STANDING" => "green",
-                                "PROBATION" => "orange",
+                                "PROBATION" => "brown",
+                                "UNSATISFACTORY PERFORMANCE IN 2 MAJORS" => "orange",
                                 "OUTRIGHT DISQUALIFICATION" => "red",
                                 default => "black"
                             };
                         ?>
                         <tr>
-                            <td><?= htmlspecialchars($index+1) ?></td>
-                            <td><?= htmlspecialchars(strtoupper($student['name'])) ?></td>
-                            <td style="color: <?= $remarksColor ?>;"><strong><?= $remarks ?></strong></td>
+                            <td><small><?= htmlspecialchars($index+1) ?></small></td>
+                            <td><small><?= htmlspecialchars(strtoupper($student['name'])) ?></small></td>
+                            <td style="color: <?= $remarksColor ?>;"><small><?= $remarks ?></small></td>
+                            <td><small><?= $reason ?></small></td>
                             <td>
                                 <button 
-                                    class="btn btn-primary btn-sm view-grades-btn" 
+                                    class="btn btn-primary btn-sm view-grades-btn fs-6" 
                                     data-student-id="<?= htmlspecialchars($student['id']) ?>" 
                                     data-student-name="<?= htmlspecialchars(strtoupper($student['name'])) ?>"
                                 >
                                     View Grades
                                 </button>
                                 <button 
-                                    class="btn btn-primary btn-sm export-grades-btn" 
+                                    class="btn btn-primary btn-sm export-grades-btn fs-6" 
                                     data-student-id="<?= htmlspecialchars($student['id']) ?>" 
                                     data-student-name="<?= htmlspecialchars(strtoupper($student['name'])) ?>"
                                 >
-                                    Print Evaluated Grades
+                                    Print Grades
                                 </button>
                             </td>
                         </tr>

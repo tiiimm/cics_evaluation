@@ -42,7 +42,7 @@ if (isset($_GET['student_id'])) {
         'CSS' => [33.5, 204],
         'GE 115' => [33.5, 209],
         'GE 116' => [33.5, 214.5],
-        'GE Elective 2' => [33.5, 219.5], // e.g., Environmental Science
+        'GE Elective 1' => [33.5, 219.5], // e.g., Environmental Science
         'PE' => [33.5, 226],
         'NSTP-CWTS' => [33.5, 232],
         'NSTP-ROTC' => [33.5, 232]
