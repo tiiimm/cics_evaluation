@@ -306,27 +306,31 @@ try {
                     button.addEventListener('click', function() {
                         const studentId = this.getAttribute('data-student-id');
                         const studentName = this.getAttribute('data-student-name');
-                        
+
                         // Set student name in modal title
                         document.getElementById('studentName').textContent = studentName;
-                        
-                        // Fetch grades via AJAX (using Fetch API)
+
+                        // Show loading message immediately to prevent showing previous data
+                        const gradesContainer = document.getElementById('gradesContainer');
+                        gradesContainer.innerHTML = 'Loading grades...';
+
+                        // Show the modal first
+                        const modal = new bootstrap.Modal(document.getElementById('gradesModal'));
+                        modal.show();
+
+                        // Fetch grades via AJAX
                         fetch(`fetch_grades.php?student_id=${encodeURIComponent(studentId)}`)
                             .then(response => {
                                 if (!response.ok) throw new Error('Failed to load grades');
                                 return response.text();
                             })
                             .then(html => {
-                                document.getElementById('gradesContainer').innerHTML = html;
+                                gradesContainer.innerHTML = html;
                             })
                             .catch(error => {
-                                document.getElementById('gradesContainer').innerHTML = 'Failed to load grades.';
+                                gradesContainer.innerHTML = 'Failed to load grades.';
                                 console.error(error);
                             });
-                        
-                        // Show the modal (assuming Bootstrap 5+)
-                        const modal = new bootstrap.Modal(document.getElementById('gradesModal'));
-                        modal.show();
                     });
                 });
                 document.querySelectorAll('.export-grades-btn').forEach(button => {

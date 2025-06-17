@@ -18,7 +18,7 @@
     <h2>Upload Gradesheet (.docx)</h2>
     <form action="extract.php" method="POST" enctype="multipart/form-data">
         <div class="button-container">
-            <button type="button" onclick="window.location.href='extract.php'">Upload Gradesheet</button>
+            <!-- <button type="button" onclick="window.location.href='extract.php'">Upload Gradesheet</button> -->
             <button type="button" onclick="window.location.href='student_list.php'">View Student List</button>
         </div>
     </form>

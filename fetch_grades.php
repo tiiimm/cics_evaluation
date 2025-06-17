@@ -106,7 +106,7 @@ if (isset($_GET['student_id'])) {
 
         // Display summary
         echo "<hr>";
-        if ($countNumeric == 8 || $countNumeric == 9) echo "<p><strong>Average:</strong> " . ($average !== null ? number_format($average, 2) : "N/A") . "</p>";
+        if ($countNumeric == 7 || $countNumeric == 8) echo "<p><strong>Average (without PE):</strong> " . ($average !== null ? number_format($average, 2) : "N/A") . "</p>";
         $remarksColor = ($remarks === 'GOOD STANDING') ? 'green' : 'red';
         echo "<p><strong>Remarks:</strong> <span style='color: $remarksColor;'>$remarks</span><br>";
         if($remarks != 'GOOD STANDING')echo "<strong>Reason:</strong><br>$reason</p>";
